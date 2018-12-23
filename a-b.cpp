@@ -222,11 +222,11 @@ int main() {
     }
   } else {
     while(true) {
-      input(cur);
+      cur = a_b(cur);
       print(cur);
       win(cur);
-
-      cur = a_b(cur);
+      
+      input(cur);
       print(cur);
       win(cur);
     }    
