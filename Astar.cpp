@@ -61,20 +61,39 @@ bool comp(node* a, node* b) {
 }
 
 string final = "123804765";
+int type = 2;
 int evaluation(string s) {
-  // int count = 0;
-  // for(int i = 0; i < 9; i++) {
-  //   if(s[i] != final[i])
-  //     count++;
-  // }
-  // return count;
+  if(type == 1) {
+    int count = 0;
+    for(int i = 0; i < 9; i++) {
+      if(s[i] != final[i] && s[i] != '0')
+        count++;
+    }
+    return count;
+  }
   int count = 0;
-  for(char i = '0'; i < '9'; i++) {
+  for(char i = '1'; i < '9'; i++) {
     int start = s.find(i);
     int end = final.find(i);
     count += abs(start/3-end/3)+abs(start%3-end%3);  //　后者在复杂情况下会快很多
   }
   return count;
+  // 九数码
+  // if(type == 1) {
+  //   int count = 0;
+  //   for(int i = 0; i < 9; i++) {
+  //     if(s[i] != final[i])
+  //       count++;
+  //   }
+  //   return count;
+  // }
+  // int count = 0;
+  // for(char i = '0'; i < '9'; i++) {
+  //   int start = s.find(i);
+  //   int end = final.find(i);
+  //   count += abs(start/3-end/3)+abs(start%3-end%3);  //　后者在复杂情况下会快很多
+  // }
+  // return count;
 }
 
 void update(node* current, int depth) {
@@ -92,7 +111,7 @@ void format(string s) {
 		if(i%3 == 2)                       // 输出为矩阵形式
 			cout << endl; 
 	}
-	cout << endl;
+  cout << "评估函数值: " << evaluation(s) << endl;
 }
 
 
@@ -124,18 +143,21 @@ bool check(string s) {
     }
   }
   if((count_a+count_b)%2==1) {
-    cout << "no solution" << endl;
+    // cout << "no solution" << endl;
     return false;
   }
   return true;
 }
 
 int main() {
-  
-  string init = generator();
-  cout << init << endl;
-  if(!check(init))
+  cout << "Choose a kind of evaluation: 1 or 2" << endl;
+  cin >> type;
+  if(type != 1 && type != 2)
     return 0;
+  string init = "507814326";
+  // string init = generator();
+  while(!check(init))
+    init = generator();
   vector<node*> open;
   map<string, node*> G_table;                                        // G_table 存储所有的节点
 
@@ -144,24 +166,38 @@ int main() {
   G_table.insert(make_pair(init, init_node));                        // 初始化添加第一个节点
 
   bool reach = false;
-  set<string> test;
+  // set<string> test;
+
+  int total = 1; // 总扩展的节点数
   while(!open.empty()) {
     sort(open.begin(), open.end(), comp);
 
     node* top = open[0];                                             // 选取f(n)值最小的节点
+
+    cout << " 当前open表的节点数: " << open.size();
+    cout << " 评估函数值最小的节点: " << top->data; 
+    cout << " 评估函数的最小值: " << top->depth+top->eval;
+    cout << " 总扩展的节点数: " << total;
+    printf("\r\033[k"); 
+
+    if(top->depth+top->eval > 27) {
+      cout << "error" << endl;
+      exit(0);
+    }
+
     open.erase(open.begin());
     
-    if(test.find(top->data) != test.end())
-      break;
-    test.insert(top->data);
+    // if(test.find(top->data) != test.end())
+    //   break;
+    // test.insert(top->data);
 
     if(top->data == final) {
+      cout << endl << "f*(S0)=" << top->depth;
       reach = true;
       break;
     }
 
     vector<string> children = get_children(top->data);               // 产生n的一切后继
-
     set<string> ancestors = top->ancestors;                       // 后继的祖先为n的祖先加上n
     ancestors.insert(top->data);
 
@@ -174,6 +210,7 @@ int main() {
         node* child = new node(children[i], top, {}, {}, top->depth+1, evaluation(children[i]));
         top->children.push_back(child);
         open.push_back(child);
+        total++;
         G_table.insert(make_pair(children[i], child));
       } else {
         if(top->depth+1 < G_table[children[i]]->depth) {
@@ -187,6 +224,7 @@ int main() {
     }
   }
   if(reach) {
+    cout << endl;
   	vector<string> path;
     node* p = G_table[final];
     while(p->parent) {
@@ -194,8 +232,15 @@ int main() {
       p = p->parent;
     }
     path.push_back(p->data);
-    for(auto i = path.rbegin(); i != path.rend(); i++)
-    	format(*i);
+    for(int i = 0; i < path.size()-1; i++)
+      if(evaluation(path[i]) > 1+evaluation(path[i+1])) {
+        cout << "error" << endl;
+        exit(0);
+      }
+    for(auto i = path.rbegin(); i != path.rend(); i++) {
+      cout << *i << " 评估值" << evaluation(*i) << endl;
+    	// format(*i);
+    }
   } else {
     cout << "cannot reach" << endl;
   }
